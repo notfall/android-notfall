@@ -80,7 +80,7 @@
                 android:hint="Password"
                 android:textSize="20sp"
                 android:textColor="@color/Black"
-                android:id="@+id/password_TextEdit"
+                android:id="@+id/password_TextEdit2"
                 android:layout_centerVertical="true"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true"
