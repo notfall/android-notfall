@@ -57,10 +57,11 @@ import java.util.ArrayList;
  * Created by mohamed on 1/29/17.
  */
 
-public class MainActivity extends AppCompatActivity implements PopUpInterface{
+public class MainActivity extends AppCompatActivity implements PopUpInterface {
 
     private static final int MY_PERMISSIONS_REQUEST_FINE_LOCATION = 21;
     private static final int MY_PERMISSION_CALL_PHONE = 22;
+    private static final int MY_PERMISSION_SEND_SMS = 18;
     private ArrayAdapter<String> mAdapter;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
@@ -137,6 +138,7 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface{
             public void onClick(View view) {
                 nearbyHelpersBuilder();
                 requestFabMenu.close(true);
+                postNearestToYou();
 
             }
         });
@@ -163,17 +165,17 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface{
     private void checkPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                ActivityCompat.requestPermissions((Activity)this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+                ActivityCompat.requestPermissions((Activity) this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_FINE_LOCATION);
 
             } else {
-                ActivityCompat.requestPermissions((Activity)this, new String[]{Manifest.permission.CALL_PHONE}, MY_PERMISSION_CALL_PHONE);
+                ActivityCompat.requestPermissions((Activity) this, new String[]{Manifest.permission.CALL_PHONE}, MY_PERMISSION_CALL_PHONE);
             }
         }
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this,
                 Manifest.permission.CALL_PHONE)
-                != PackageManager.PERMISSION_GRANTED ) {
+                != PackageManager.PERMISSION_GRANTED) {
 
             // No explanation needed, we can request the permission.
 
@@ -195,16 +197,16 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface{
         queryref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for(DataSnapshot child: dataSnapshot.getChildren()) {
-                    if( ((int) (long) child.child("type").getValue()) == 1) {
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    if (((int) (long) child.child("type").getValue()) == 1) {
                         User tempUser = new User(child.getKey().toString());
                         allCareTakers.add(tempUser);
                     }
-                    if( ((int) (long) child.child("type").getValue()) == 2) {
+                    if (((int) (long) child.child("type").getValue()) == 2) {
                         User tempUser = new User(child.getKey().toString());
                         allFirstResponders.add(tempUser);
                     }
-                    if( ((int) (long) child.child("type").getValue()) == 3) {
+                    if (((int) (long) child.child("type").getValue()) == 3) {
                         User tempUser = new User(child.getKey().toString());
                         allHospitals.add(tempUser);
                     }
@@ -241,20 +243,21 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface{
     }
 
     private void nearbyHelpersBuilder() {
+        nearbyHelpers.clear();
         ArrayList<User> allHelpers = new ArrayList<User>();
-        if(currentlyViewing == 0) {
+        if (currentlyViewing == 0) {
             allHelpers.addAll(allCareTakers);
             allHelpers.addAll(allFirstResponders);
-        } else if(currentlyViewing == 1) {
+        } else if (currentlyViewing == 1) {
             allHelpers.addAll(allCareTakers);
-        } else if(currentlyViewing == 2) {
+        } else if (currentlyViewing == 2) {
             allHelpers.addAll(allFirstResponders);
-        } else if(currentlyViewing == 3) {
+        } else if (currentlyViewing == 3) {
             allHelpers.addAll(allHospitals);
         }
-        for(User helper : allHelpers) {
+        for (User helper : allHelpers) {
             double distance = distance(currentUser.getLatitude(), currentUser.getLongitude(), helper.getLatitude(), helper.getLongitude(), 'M');
-            if(distance < 3) {
+            if (distance < 3) {
                 nearbyHelpers.add(helper);
             }
         }
@@ -262,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface{
 
     private void postNearestToYou() {
         String contentString = "";
-        for(User helper: nearbyHelpers) {
+        for (User helper : nearbyHelpers) {
             contentString += helper.fullName + " \n";
         }
         MaterialDialog dialog = new MaterialDialog.Builder(this)
@@ -282,19 +285,22 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface{
     }
 
     private void sendTextToNearby() {
-        for (User helper: nearbyHelpers) {
-            SmsManager.getDefault().sendTextMessage(helper.phoneNumber, null, currentUser.getFullName() + " needs help at Minneapolis,Minnesota(" + currentUser.getLocation() + "\n \n \n https://www.google.com/maps/@" + currentUser.getLocation() + ",15z" , null, null);
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.SEND_SMS},
+                1);
+        for (User helper : nearbyHelpers) {
+            SmsManager.getDefault().sendTextMessage(helper.phoneNumber, null, currentUser.getFullName() + " needs help at Minneapolis,Minnesota(" + currentUser.getLocation() + ")\n \n \n https://www.google.com/maps/@" + currentUser.getLocation() + ",15z", null, null);
         }
 
     }
 
     public void checkTextPermission() {
         if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_CONTACTS)
+                Manifest.permission.SEND_SMS)
                 != PackageManager.PERMISSION_GRANTED) {
             String[] PERMISSIONS_CONTACT = {Manifest.permission.READ_CONTACTS,
-                    Manifest.permission.WRITE_CONTACTS};
-            final int REQUEST_CONTACTS = 1;
+                    Manifest.permission.WRITE_CONTACTS, Manifest.permission.SEND_SMS};
+            final int REQUEST_CONTACTS = 10;
             ActivityCompat.requestPermissions(this, PERMISSIONS_CONTACT, REQUEST_CONTACTS);
         }
 
@@ -339,6 +345,7 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface{
         });
         setUpOnClickListeners();
     }
+
     private void grabLocation() {
         MyLocation.LocationResult locationResult = new MyLocation.LocationResult() {
             @Override
@@ -472,6 +479,19 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface{
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                         Intent intent = new Intent(Intent.ACTION_CALL);
                         intent.setData(Uri.parse("tel:9542606118"));
+                        currentlyViewing = 0;
+                        nearbyHelpersBuilder();
+                        sendTextToNearby();
+                        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                            // TODO: Consider calling
+                            //    ActivityCompat#requestPermissions
+                            // here to request the missing permissions, and then overriding
+                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                            //                                          int[] grantResults)
+                            // to handle the case where the user grants the permission. See the documentation
+                            // for ActivityCompat#requestPermissions for more details.
+                            return;
+                        }
                         startActivity(intent);
                     }
                 })
@@ -516,6 +536,7 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface{
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
+            case MY_PERMISSION_SEND_SMS:
             case MY_PERMISSION_CALL_PHONE:
             case MY_PERMISSIONS_REQUEST_FINE_LOCATION: {
                 // If request is cancelled, the result arrays are empty.
