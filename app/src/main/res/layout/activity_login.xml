@@ -13,10 +13,10 @@
 
     <ImageView
         android:layout_width="match_parent"
-        android:layout_height="118dp"
-        android:paddingBottom="16dp"
+        android:layout_height="72dp"
+        android:layout_marginBottom="16dp"
         android:elevation="8dp"
-        android:src="@color/colorPrimary"/>
+        android:src="@mipmap/ic_launcher"/>
     <EditText
         android:layout_width="1dp"
         android:layout_height="1dp" />
@@ -92,6 +92,8 @@
         android:layout_width="match_parent"
         android:layout_marginTop="8dp"
         android:backgroundTint="@color/colorPrimary"
+        android:textColor="@color/White"
+        android:textStyle="bold"
         android:text="LOGIN"
         android:layout_height="72dp" />
 
