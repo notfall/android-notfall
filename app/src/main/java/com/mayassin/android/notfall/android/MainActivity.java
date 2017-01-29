@@ -1,9 +1,14 @@
 package com.mayassin.android.notfall.android;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -35,6 +40,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int MY_PERMISSIONS_REQUEST_FINE_LOCATION = 21;
     private ArrayAdapter<String> mAdapter;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
@@ -45,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionMenu requestFabMenu;
     private FloatingActionButton call911Fab;
     private boolean openedSearchSpinner;
+    private Location lastLocation;
     private ArrayList<User> allCareTakers;
     private ArrayList<User> allFirstResponders;
     private ArrayList<User> allHospitals;
@@ -73,6 +80,63 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setTitle(mActivityTitle);
+
+
+
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            initializeApp();
+            grabLocation();
+        } else {
+            checkPermissions();
+        }
+        
+        
+        
+        
+        
+    }
+
+    private void checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // No explanation needed, we can request the permission.
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+        }
+    }
+    private double distance(double lat1, double lon1, double lat2, double lon2, char unit) {
+        double theta = lon1 - lon2;
+        double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
+        dist = Math.acos(dist);
+        dist = rad2deg(dist);
+        dist = dist * 60 * 1.1515;
+        if (unit == 'K') {
+            dist = dist * 1.609344;
+        } else if (unit == 'N') {
+            dist = dist * 0.8684;
+        }
+        return (dist);
+    }
+
+    private double deg2rad(double deg) {
+        return (deg * Math.PI / 180.0);
+    }
+    private double rad2deg(double rad) {
+        return (rad * 180.0 / Math.PI);
+    }
+
+    private void initializeApp() {
+
         MaterialSpinner spinner = (MaterialSpinner) findViewById(R.id.looking_for_spinner);
         spinner.setItems("....", "a care taker", "a first responder", "a nearby hospital");
         spinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
@@ -90,6 +154,24 @@ public class MainActivity extends AppCompatActivity {
         });
 
         setUpOnClickListeners();
+    }
+
+    private void grabLocation() {
+        MyLocation.LocationResult locationResult = new MyLocation.LocationResult(){
+            @Override
+            public void gotLocation(Location location){
+                //Got the location!
+                lastLocation = location;
+                postLocationToServer();
+            }
+        };
+        MyLocation myLocation = new MyLocation();
+        myLocation.getLocation(this, locationResult);
+
+    }
+
+    private void postLocationToServer() {
+
     }
 
     private void setUpOnClickListeners() {
@@ -162,7 +244,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void generateCareTakers() {
-
+        User johnBill = new User("John Bill", 1);
+        User timBob = new User("Tim Bob", 1);
+        User michaelscott = new User("Michael Scott", 1);
+        User mohamed = new User("Mohamed Barack", 1);
+        User clinton = new User("Daniel Clinten", 1);
+        allCareTakers.add(johnBill);
+        allCareTakers.add(timBob);
+        allCareTakers.add(clinton);
+        allCareTakers.add(michaelscott);
+        allCareTakers.add(mohamed);
     }
 
     @Override
@@ -196,6 +287,38 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_FINE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    initializeApp();
+                    grabLocation();
+                } else {
+                    MaterialDialog dialog = new MaterialDialog.Builder(this)
+                            .title("Permission Denied")
+                            .positiveColor(getResources().getColor(R.color.colorPrimary))
+                            .neutralColor(getResources().getColor(R.color.Gray))
+                            .content("This app is almost useless without location permission. Please grant it")
+                            .positiveText("OKAY")
+                            .onPositive(new MaterialDialog.SingleButtonCallback() {
+                                @Override
+                                public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                    checkPermissions();
+                                }
+                            })
+                            .show();
+                }
+                return;
+            }
+
+        }
     }
 }
 

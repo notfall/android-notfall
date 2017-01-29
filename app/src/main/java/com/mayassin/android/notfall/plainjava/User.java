@@ -4,7 +4,7 @@ package com.mayassin.android.notfall.plainjava;
  * Created by Anurag on 1/29/17.
  */
 
-public abstract class User {
+public class User {
     private String username;
     private int age;
     private String fullName;
@@ -18,7 +18,19 @@ public abstract class User {
     public User(){
     }
 
-    public User(String username, int age, String fullName, String location){
+    public String getType() {
+        switch (type) {
+            default:
+            case 0:
+                return "Patient";
+            case 1:
+                return "Caretaker";
+            case 2:
+                return "First Responder";
+        }
+    }
+
+    public User(int type,String username, int age, String fullName, String location){
 
         this.username = username;
         this.age = age;
@@ -26,6 +38,11 @@ public abstract class User {
         String[] splitLocations = location.split("\\s*,\\s*");
         this.latitude = Double.parseDouble(splitLocations[0]);
         this.longitude = Double.parseDouble(splitLocations[1]);
+    }
+
+    public User(String fullName, int type) {
+        this.fullName = fullName;
+        this.type = type;
     }
 
     public String getUsername() {

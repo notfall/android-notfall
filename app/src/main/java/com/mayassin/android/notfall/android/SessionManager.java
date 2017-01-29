@@ -2,6 +2,7 @@ package com.mayassin.android.notfall.android;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.provider.Settings;
 
 /**
@@ -21,15 +22,20 @@ public class SessionManager {
         this._context = context;
         pref = _context.getSharedPreferences("sessionApp", Context.MODE_PRIVATE);
         editor = pref.edit();
-        android_id = Settings.Secure.getString(context.getContentResolver(),
-                Settings.Secure.ANDROID_ID);
     }
 
-    public void createSessionFromKey(String key){
-//        editor.putBoolean("loggedIn",true);
-//        editor.putString("key",key);
-//        editor.commit();
+    public void createSession(String username){
+        editor.putBoolean("loggedIn",true);
+        editor.putString("username",username);
+        editor.commit();
     }
+
+    public void updateLocation(Location location) {
+        editor.putString("location_x", "" + location.getLatitude());
+        editor.putString("location_y", "" + location.getLongitude());
+        editor.commit();
+    }
+
 
 
 
@@ -44,7 +50,7 @@ public class SessionManager {
 
 
     public String getCurrentUser(){
-        return pref.getString("user_id",null);
+        return pref.getString("username",null);
     }
 
     public boolean isLoggedIn(){
