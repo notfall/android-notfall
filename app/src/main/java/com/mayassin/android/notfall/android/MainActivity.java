@@ -1,11 +1,14 @@
 package com.mayassin.android.notfall.android;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -56,6 +59,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_FINE_LOCATION = 21;
+    private static final int MY_PERMISSION_CALL_PHONE = 22;
     private ArrayAdapter<String> mAdapter;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
@@ -68,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean openedSearchSpinner;
     private SessionManager sess;
     private Location lastLocation;
-    private User clinton,jbill,mohamed,mscott,tbob;
+    private User clinton, jbill, mohamed, mscott, tbob;
     private ArrayList<User> allCareTakers = new ArrayList<User>();
     private ArrayList<User> allFirstResponders;
     private ArrayList<User> allHospitals;
@@ -77,8 +81,6 @@ public class MainActivity extends AppCompatActivity {
     private StorageReference storageRef;
     private RecycleViewAdapterHelpers adapter;
     private String currentlyViewing;
-
-
 
 
     @Override
@@ -91,8 +93,8 @@ public class MainActivity extends AppCompatActivity {
         generateAllHelpers();
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
-        mDrawerList = (ListView)findViewById(R.id.left_drawer);
-        mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mActivityTitle = "Hello, " + sess.getCurrentUser();
         recyclerView = (RecyclerView) findViewById(R.id.recyle);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -105,11 +107,14 @@ public class MainActivity extends AppCompatActivity {
         setupDrawer();
         pullDataAboutCurrentUser();
 
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{Manifest.permission.CALL_PHONE},
+                MY_PERMISSION_CALL_PHONE);
+
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setTitle(mActivityTitle);
-
 
 
         if (ContextCompat.checkSelfPermission(this,
@@ -120,9 +125,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             checkPermissions();
         }
-
-
-
 
 
     }
@@ -136,21 +138,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale((Activity) this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                ActivityCompat.requestPermissions((Activity)this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+
+            } else {
+                ActivityCompat.requestPermissions((Activity)this, new String[]{Manifest.permission.CALL_PHONE}, MY_PERMISSION_CALL_PHONE);
+            }
+        }
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
+                != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.CALL_PHONE)
+                != PackageManager.PERMISSION_GRANTED ) {
 
             // No explanation needed, we can request the permission.
 
+
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+                    new String[]{Manifest.permission.CALL_PHONE},
+                    MY_PERMISSION_CALL_PHONE);
+
 
             // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
             // app-defined int constant. The callback method gets the
             // result of the request.
         }
     }
+
     private double distance(double lat1, double lon1, double lat2, double lon2, char unit) {
         double theta = lon1 - lon2;
         double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
@@ -168,6 +183,7 @@ public class MainActivity extends AppCompatActivity {
     private double deg2rad(double deg) {
         return (deg * Math.PI / 180.0);
     }
+
     private double rad2deg(double rad) {
         return (rad * 180.0 / Math.PI);
     }
@@ -178,27 +194,28 @@ public class MainActivity extends AppCompatActivity {
         spinner.setItems("....", "a care taker", "a first responder", "a nearby hospital");
         spinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
 
-            @Override public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                if(!openedSearchSpinner) {
+            @Override
+            public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
+                if (!openedSearchSpinner) {
                     call911Button.setVisibility(View.GONE);
                     requestFabMenu.showMenuButton(true);
                     openedSearchSpinner = true;
                 }
 
-                if(position == 0 ) {
+                if (position == 0) {
                     allCareTakers.clear();
                     adapter.notifyDataSetChanged();
                     currentlyViewing = "Nothing";
                 }
-                if(position == 1 ) {
+                if (position == 1) {
                     attachCaretaker();
                     currentlyViewing = "CareTakers";
                 }
-                if(position == 2 ) {
+                if (position == 2) {
                     attachAdapterFirstResponder();
                     currentlyViewing = "First Responders";
                 }
-                if(position == 3 ) {
+                if (position == 3) {
                     attachHospitals();
                 }
 //                Snackbar.make(view, "Clicked " + item, Snackbar.LENGTH_LONG).show();
@@ -215,9 +232,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void grabLocation() {
-        MyLocation.LocationResult locationResult = new MyLocation.LocationResult(){
+        MyLocation.LocationResult locationResult = new MyLocation.LocationResult() {
             @Override
-            public void gotLocation(Location location){
+            public void gotLocation(Location location) {
                 //Got the location!
                 lastLocation = location;
                 postLocationToServer();
@@ -254,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addDrawerItems() {
-        String[] osArray = { "Profile", "Home", "Navigate", "Contact","Logout", "Call 911"};
+        String[] osArray = {"Profile", "Home", "Navigate", "Contact", "Logout", "Call 911"};
         mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, osArray);
         mDrawerList.setAdapter(mAdapter);
 
@@ -265,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
                 getSupportActionBar().setTitle(mActivityTitle);
                 mDrawerLayout.closeDrawer(Gravity.LEFT, true);
 
-                if(position == 4) {
+                if (position == 4) {
                     sess.destroySession();
                 }
 
@@ -294,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
         final ImageView profilePictureImageView = (ImageView) dialog.getCustomView().findViewById(R.id.profile_image);
         profileFullNameTextView.setText(currentUser.getFullName());
         profilelocationTextView.setText("" + lastLocation.getLatitude() + " , " + lastLocation.getLongitude());
-        profileAgeTextView.setText(currentUser.getAge()+"");
+        profileAgeTextView.setText(currentUser.getAge() + "");
 
         StorageReference pathReference = storageRef.child("users").child(currentUser.getUsername()).child("profilepic.jpg");
         pathReference.getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
@@ -345,7 +362,9 @@ public class MainActivity extends AppCompatActivity {
                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        Snackbar.make(recyclerView.getRootView(), "Help is on the way!", Snackbar.LENGTH_LONG).show();
+                        Intent intent = new Intent(Intent.ACTION_CALL);
+                        intent.setData(Uri.parse("tel:9542606118"));
+                        startActivity(intent);
                     }
                 })
                 .show();
@@ -415,6 +434,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
+            case MY_PERMISSION_CALL_PHONE:
             case MY_PERMISSIONS_REQUEST_FINE_LOCATION: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
@@ -432,7 +452,9 @@ public class MainActivity extends AppCompatActivity {
                             .onPositive(new MaterialDialog.SingleButtonCallback() {
                                 @Override
                                 public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                    checkPermissions();
+                                    ActivityCompat.requestPermissions(MainActivity.this,
+                                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                            MY_PERMISSIONS_REQUEST_FINE_LOCATION);
                                 }
                             })
                             .show();
