@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fab="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="4dp"
+    android:layout_marginTop="8dp">
+
+    <android.support.v7.widget.CardView
+        xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/card_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_margin="4dp"
+        android:layout_weight="0.1"
+        android:layout_marginBottom="16dp"
+
+        card_view:cardElevation="2dp"
+        card_view:cardCornerRadius="4dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:orientation="horizontal"
+            android:layout_height="56dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="0.4"
+                android:layout_gravity="center_vertical"
+                android:paddingLeft="12dp"
+                android:text="Looking for ..."
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/Gray"
+                android:layout_height="wrap_content" />
+
+            <com.jaredrummler.materialspinner.MaterialSpinner
+                android:layout_width="0dp"
+                android:layout_weight="0.6"
+                android:layout_height="56dp"
+                android:textColorHint="@color/Gray"
+                android:backgroundTint="@color/White"
+                android:id="@+id/looking_for_spinner"
+                android:hint="a caretaker.."/>
+        </LinearLayout>
+
+    </android.support.v7.widget.CardView>
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_weight="0.8"
+        android:layout_height="0dp">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recyle"
+            android:padding="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+
+        <com.github.clans.fab.FloatingActionMenu
+            android:id="@+id/submit_post_fab_menu"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginLeft="10dp"
+            fab:menu_animationDelayPerItem="0"
+            fab:menu_colorPressed="#2E7D32"
+            fab:menu_colorRipple="#1B5E20"
+            fab:menu_labels_maxLines="2"
+            fab:menu_labels_ellipsize="end"
+            app:menu_colorNormal="@color/colorPrimary">
+
+            <com.github.clans.fab.FloatingActionButton
+                android:layout_width="wrap_content"
+                android:id="@+id/add_note_fab"
+                android:layout_height="wrap_content"
+                app:fab_size="mini"
+                app:fab_colorNormal="@color/White"
+                fab:fab_label="Note" />
+
+            <com.github.clans.fab.FloatingActionButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/add_alert_fab"
+                app:fab_size="mini"
+                app:fab_colorNormal="@color/White"
+                fab:fab_label="Alert" />
+
+        </com.github.clans.fab.FloatingActionMenu>
+
+    </FrameLayout>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/White"
+        android:text="CALL 911"
+        android:backgroundTint="@color/PaleVioletRed"/>
+
+</LinearLayout>
