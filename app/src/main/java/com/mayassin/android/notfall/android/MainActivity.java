@@ -2,6 +2,7 @@ package com.mayassin.android.notfall.android;
 
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -14,9 +15,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.mayassin.android.notfall.R;
 
@@ -32,6 +38,10 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout mDrawerLayout;
     private String mActivityTitle;
     private RecyclerView recyclerView;
+    private Button call911Button;
+    private FloatingActionMenu requestFabMenu;
+    private FloatingActionButton call911Fab;
+    private boolean openedSearchSpinner;
 
 
     @Override
@@ -42,28 +52,57 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         mDrawerList = (ListView)findViewById(R.id.left_drawer);
         mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
-        mActivityTitle = getTitle().toString();
+        mActivityTitle = "Welcome, Mrs. Kent";
         recyclerView = (RecyclerView) findViewById(R.id.recyle);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-
+        call911Button = (Button) findViewById(R.id.call_911_button);
+        requestFabMenu = (FloatingActionMenu) findViewById(R.id.main_fab_menu);
+        call911Fab = (FloatingActionButton) findViewById(R.id.call_911_fab);
+        requestFabMenu.hideMenuButton(false);
         addDrawerItems();
         setupDrawer();
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setTitle(mActivityTitle);
         MaterialSpinner spinner = (MaterialSpinner) findViewById(R.id.looking_for_spinner);
-        spinner.setItems("a care taker", "a first responder", "a nearby hospital");
+        spinner.setItems("....", "a care taker", "a first responder", "a nearby hospital");
         spinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
 
             @Override public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                Snackbar.make(view, "Clicked " + item, Snackbar.LENGTH_LONG).show();
+                if(openedSearchSpinner) {
+                    return;
+                }
+                call911Button.setVisibility(View.GONE);
+                requestFabMenu.showMenuButton(true);
+                openedSearchSpinner = true;
+
+//                Snackbar.make(view, "Clicked " + item, Snackbar.LENGTH_LONG).show();
             }
         });
+
+        setUpOnClickListeners();
+    }
+
+    private void setUpOnClickListeners() {
+        call911Button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                emergency911PopUp();
+            }
+        });
+        call911Fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                requestFabMenu.close(true);
+                emergency911PopUp();
+            }
+        });
+
     }
 
     private void addDrawerItems() {
-        String[] osArray = { "Profile", "Home", "Navigate", "Contact"};
+        String[] osArray = { "Profile", "Home", "Navigate", "Contact", "Call 911"};
         mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, osArray);
         mDrawerList.setAdapter(mAdapter);
 
@@ -81,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
             /** Called when a drawer has settled in a completely open state. */
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
-                getSupportActionBar().setTitle("Navigation!");
+                getSupportActionBar().setTitle("Navigation");
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
 
@@ -95,6 +134,23 @@ public class MainActivity extends AppCompatActivity {
 
         mDrawerToggle.setDrawerIndicatorEnabled(true);
         mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+
+    private void emergency911PopUp() {
+        MaterialDialog dialog = new MaterialDialog.Builder(this)
+                .title("ARE YOU SURE?")
+                .content("Clicking yes will call the police and contact any first responders near you.")
+                .positiveColor(getResources().getColor(R.color.Red))
+                .neutralColor(getResources().getColor(R.color.Gray))
+                .positiveText("CALL 911")
+                .neutralText("NEVERMIND")
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        Snackbar.make(recyclerView.getRootView(), "Help is on the way!", Snackbar.LENGTH_LONG).show();
+                    }
+                })
+                .show();
     }
 
     @Override

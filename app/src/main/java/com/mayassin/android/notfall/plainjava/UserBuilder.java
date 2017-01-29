@@ -43,10 +43,10 @@ public class UserBuilder {
             // check if Patient, Caretaker, or Responder
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.getValue() == 0){
+                if(Integer.parseInt(dataSnapshot.getValue().toString()) == 0){
                     createPatient();
                 }
-                else if(dataSnapshot.getValue() == 1){
+                else if(Integer.parseInt(dataSnapshot.getValue().toString()) == 1){
                     createCaretaker();
                 }
                 else{
