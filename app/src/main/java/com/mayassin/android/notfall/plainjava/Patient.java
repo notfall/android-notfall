@@ -1,10 +1,18 @@
 package com.mayassin.android.notfall.plainjava;
 
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class Patient {
 
-  String username;
+
+    private DatabaseReference mFirebaseDatabaseReference;
+    public Patient() {
+        mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+    }
+
+    String username;
   int age;
   String fullName;
   String insuranceProvider;
@@ -13,6 +21,7 @@ public class Patient {
   String primaryCaretaker;
 
   public Patient(String username, int age, String fullName, String insuranceProvider, String location, String primaryCaretaker) {
+      super();
     this.username = username;
     this.age = age;
     this.fullName = fullName;
