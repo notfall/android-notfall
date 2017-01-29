@@ -11,7 +11,6 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -20,8 +19,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.telephony.SmsManager;
+import android.util.Log;
 import android.view.Gravity;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -42,8 +42,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.jaredrummler.materialspinner.MaterialSpinner;
@@ -56,7 +57,7 @@ import java.util.ArrayList;
  * Created by mohamed on 1/29/17.
  */
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements PopUpInterface{
 
     private static final int MY_PERMISSIONS_REQUEST_FINE_LOCATION = 21;
     private static final int MY_PERMISSION_CALL_PHONE = 22;
@@ -68,19 +69,22 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private Button call911Button;
     private FloatingActionMenu requestFabMenu;
-    private FloatingActionButton call911Fab;
+    private FloatingActionButton call911Fab, requestRespondersFab;
     private boolean openedSearchSpinner;
     private SessionManager sess;
     private Location lastLocation;
     private User clinton, jbill, mohamed, mscott, tbob;
     private ArrayList<User> allCareTakers = new ArrayList<User>();
-    private ArrayList<User> allFirstResponders;
-    private ArrayList<User> allHospitals;
+    private ArrayList<User> allFirstResponders = new ArrayList<User>();
+    private ArrayList<User> allHospitals = new ArrayList<User>();
+
+    private ArrayList<User> nearbyHelpers = new ArrayList<User>();
+
     private User currentUser;
     private DatabaseReference mFirebaseDatabaseReference;
     private StorageReference storageRef;
-    private RecycleViewAdapterHelpers adapter;
-    private String currentlyViewing;
+    private RecycleViewAdapterHelpers adapter = new RecycleViewAdapterHelpers();
+    private int currentlyViewing;
 
 
     @Override
@@ -90,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         storageRef = storage.getReferenceFromUrl("gs://notfall-aac12.appspot.com");
         sess = new SessionManager(this);
-        generateAllHelpers();
+        getAllHelpers();
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
@@ -101,6 +105,8 @@ public class MainActivity extends AppCompatActivity {
         call911Button = (Button) findViewById(R.id.call_911_button);
         requestFabMenu = (FloatingActionMenu) findViewById(R.id.main_fab_menu);
         call911Fab = (FloatingActionButton) findViewById(R.id.call_911_fab);
+        requestRespondersFab = (FloatingActionButton) findViewById(R.id.request_fab);
+
         requestFabMenu.hideMenuButton(false);
 
         addDrawerItems();
@@ -126,7 +132,24 @@ public class MainActivity extends AppCompatActivity {
             checkPermissions();
         }
 
+        requestRespondersFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                nearbyHelpersBuilder();
+                requestFabMenu.close(true);
 
+            }
+        });
+
+        sendTokenToDatabase();
+        checkTextPermission();
+    }
+
+    private void sendTokenToDatabase() {
+        String tkn = FirebaseInstanceId.getInstance().getToken();
+        mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        mFirebaseDatabaseReference.child("users").child(sess.getCurrentUser()).child("phone_token").setValue(tkn);
+//
     }
 
     private void pullDataAboutCurrentUser() {
@@ -166,6 +189,35 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void getAllHelpers() {
+        DatabaseReference mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference queryref = mFirebaseDatabaseReference.child("users");
+        queryref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot child: dataSnapshot.getChildren()) {
+                    if( ((int) (long) child.child("type").getValue()) == 1) {
+                        User tempUser = new User(child.getKey().toString());
+                        allCareTakers.add(tempUser);
+                    }
+                    if( ((int) (long) child.child("type").getValue()) == 2) {
+                        User tempUser = new User(child.getKey().toString());
+                        allFirstResponders.add(tempUser);
+                    }
+                    if( ((int) (long) child.child("type").getValue()) == 3) {
+                        User tempUser = new User(child.getKey().toString());
+                        allHospitals.add(tempUser);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
     private double distance(double lat1, double lon1, double lat2, double lon2, char unit) {
         double theta = lon1 - lon2;
         double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
@@ -188,9 +240,69 @@ public class MainActivity extends AppCompatActivity {
         return (rad * 180.0 / Math.PI);
     }
 
+    private void nearbyHelpersBuilder() {
+        ArrayList<User> allHelpers = new ArrayList<User>();
+        if(currentlyViewing == 0) {
+            allHelpers.addAll(allCareTakers);
+            allHelpers.addAll(allFirstResponders);
+        } else if(currentlyViewing == 1) {
+            allHelpers.addAll(allCareTakers);
+        } else if(currentlyViewing == 2) {
+            allHelpers.addAll(allFirstResponders);
+        } else if(currentlyViewing == 3) {
+            allHelpers.addAll(allHospitals);
+        }
+        for(User helper : allHelpers) {
+            double distance = distance(currentUser.getLatitude(), currentUser.getLongitude(), helper.getLatitude(), helper.getLongitude(), 'M');
+            if(distance < 3) {
+                nearbyHelpers.add(helper);
+            }
+        }
+    }
+
+    private void postNearestToYou() {
+        String contentString = "";
+        for(User helper: nearbyHelpers) {
+            contentString += helper.fullName + " \n";
+        }
+        MaterialDialog dialog = new MaterialDialog.Builder(this)
+                .title("Request?")
+                .content(contentString)
+                .positiveColor(getResources().getColor(R.color.colorPrimary))
+                .neutralColor(getResources().getColor(R.color.Gray))
+                .positiveText("REQUEST")
+                .neutralText("NEVERMIND")
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        sendTextToNearby();
+                    }
+                })
+                .show();
+    }
+
+    private void sendTextToNearby() {
+        for (User helper: nearbyHelpers) {
+            SmsManager.getDefault().sendTextMessage(helper.phoneNumber, null, currentUser.getFullName() + " needs help at Minneapolis,Minnesota(" + currentUser.getLocation() + "\n \n \n https://www.google.com/maps/@" + currentUser.getLocation() + ",15z" , null, null);
+        }
+
+    }
+
+    public void checkTextPermission() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            String[] PERMISSIONS_CONTACT = {Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.WRITE_CONTACTS};
+            final int REQUEST_CONTACTS = 1;
+            ActivityCompat.requestPermissions(this, PERMISSIONS_CONTACT, REQUEST_CONTACTS);
+        }
+
+    }
+
     private void initializeApp() {
 
-        MaterialSpinner spinner = (MaterialSpinner) findViewById(R.id.looking_for_spinner);
+        final MaterialSpinner spinner = (MaterialSpinner) findViewById(R.id.looking_for_spinner);
         spinner.setItems("....", "a care taker", "a first responder", "a nearby hospital");
         spinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
 
@@ -201,36 +313,32 @@ public class MainActivity extends AppCompatActivity {
                     requestFabMenu.showMenuButton(true);
                     openedSearchSpinner = true;
                 }
-
+                currentlyViewing = position;
                 if (position == 0) {
-                    allCareTakers.clear();
-                    adapter.notifyDataSetChanged();
-                    currentlyViewing = "Nothing";
+                    spinner.setText("...all");
+                    ArrayList<User> allHelpers = new ArrayList<User>();
+                    allHelpers.addAll(allCareTakers);
+                    allHelpers.addAll(allFirstResponders);
+                    allHelpers.addAll(allHospitals);
+                    adapter = new RecycleViewAdapterHelpers(allHelpers);
                 }
                 if (position == 1) {
-                    attachCaretaker();
-                    currentlyViewing = "CareTakers";
+                    adapter = new RecycleViewAdapterHelpers(allCareTakers);
                 }
                 if (position == 2) {
-                    attachAdapterFirstResponder();
-                    currentlyViewing = "First Responders";
+                    adapter = new RecycleViewAdapterHelpers(allFirstResponders);
                 }
                 if (position == 3) {
-                    attachHospitals();
+                    adapter = new RecycleViewAdapterHelpers(allHospitals);
                 }
+                recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+                adapter.setPopUpInterface(MainActivity.this);
 //                Snackbar.make(view, "Clicked " + item, Snackbar.LENGTH_LONG).show();
             }
         });
-        adapter = new RecycleViewAdapterHelpers(allCareTakers);
-        recyclerView.setAdapter(adapter);
         setUpOnClickListeners();
     }
-
-    private void attachHospitals() {
-        allCareTakers.clear();
-        adapter.notifyDataSetChanged();
-    }
-
     private void grabLocation() {
         MyLocation.LocationResult locationResult = new MyLocation.LocationResult() {
             @Override
@@ -278,7 +386,7 @@ public class MainActivity extends AppCompatActivity {
         mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(MainActivity.this, "Position Clicked " + position, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(MainActivity.this, "Position Clicked " + position, Toast.LENGTH_SHORT).show();
                 getSupportActionBar().setTitle(mActivityTitle);
                 mDrawerLayout.closeDrawer(Gravity.LEFT, true);
 
@@ -370,32 +478,6 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void attachAdapterFirstResponder() {
-        allCareTakers.clear();
-        allCareTakers.add(tbob);
-        allCareTakers.add(clinton);
-        allCareTakers.add(mscott);
-        allCareTakers.add(mohamed);
-
-        adapter.notifyDataSetChanged();
-        recyclerView.setAdapter(adapter);
-    }
-    private void generateAllHelpers() {
-        jbill = new User("jbill");
-        tbob = new User("tbob");
-        mscott = new User("mscott");
-        mohamed = new User("mohamed");
-        clinton = new User("clinton");
-    }
-
-    private void attachCaretaker() {
-        allCareTakers.clear();
-        allCareTakers.add(jbill);
-
-        adapter = new RecycleViewAdapterHelpers(allCareTakers);
-        recyclerView.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
-    }
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -463,6 +545,26 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }
+    }
+
+    @Override
+    public void popUpHelper(User user) {
+        double distance = distance(currentUser.getLatitude(), currentUser.getLongitude(), user.getLatitude(), user.getLongitude(), 'M');
+        MaterialDialog dialog = new MaterialDialog.Builder(this)
+                .title("Request " + user.getFullName() + "?")
+                .positiveColor(getResources().getColor(R.color.colorPrimary))
+                .neutralColor(getResources().getColor(R.color.Gray))
+                .content("You can request this helper manually, or request whoever is near you with the request button!\n\n This helper is " + String.format( "%.3f", distance ) + " miles away from you.")
+                .positiveText("OKAY")
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        ActivityCompat.requestPermissions(MainActivity.this,
+                                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+                    }
+                })
+                .show();
     }
 }
 

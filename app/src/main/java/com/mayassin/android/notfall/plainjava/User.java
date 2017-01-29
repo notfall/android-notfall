@@ -24,6 +24,7 @@ public class User {
     public String fullName;
     public double latitude;
     public double longitude;
+    public String phoneNumber;
     public int type;
     private StorageReference storageRef;
 
@@ -50,7 +51,13 @@ public class User {
                 return "Caretaker";
             case 2:
                 return "First Responder";
+            case 3:
+                return "Hospital";
         }
+    }
+
+    public String getLocation() {
+        return latitude +"," + longitude;
     }
 
     public User(String fullName, int type, String username) {
@@ -79,6 +86,14 @@ public class User {
                     }
                     if(child.getKey().equals("age")) {
                         age = (Long) child.getValue();
+                    }
+                    if(child.getKey().equals("location")) {
+                        String location[] = child.getValue().toString().split(",");
+                        latitude = Double.parseDouble(location[0]);
+                        longitude = Double.parseDouble(location[1]);
+                    }
+                    if(child.getKey().equals("phone_number")) {
+                        phoneNumber = child.getValue().toString();
                     }
                 }
 

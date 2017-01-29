@@ -28,9 +28,19 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
     private ArrayList<User> allHelpers;
     private DatabaseReference mFirebaseDatabaseReference;
     private StorageReference storageRef;
-//    private PopUpInterface popUpInterface;
+    private PopUpInterface popUpInterface;
+
+    public void setPopUpInterface(PopUpInterface popUpInterface) {
+        this.popUpInterface = popUpInterface;
+    }
+
+    //    private PopUpInterface popUpInterface;
     public RecycleViewAdapterHelpers(ArrayList<User> allCourses) {
         this.allHelpers = allCourses;
+    }
+
+    public RecycleViewAdapterHelpers() {
+//        this.allHelpers = allCourses;
     }
 
 
@@ -86,7 +96,8 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
             public void onClick(View view) {
                 User helper = allHelpers.get(getAdapterPosition());
 // locaterInterface.goToExhibit(allExhibits.get(getAdapterPosition()).getTitle());
-//                popUpInterface.popUp(course);
+                popUpInterface.popUpHelper(helper);
+
             }
         };
 
@@ -96,7 +107,7 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
                 User helper = allHelpers.get(getAdapterPosition());
 //                locaterInterface.popUpBox(exhibit);
                 // GO to ClassActivity
-//                popUpInterface.goToCoursePage(course);
+                popUpInterface.popUpHelper(helper);
             }
         };
     }

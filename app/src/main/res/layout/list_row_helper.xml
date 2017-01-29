@@ -52,7 +52,7 @@
                 android:id="@+id/helper_full_name_text_view"
                 android:gravity="center_vertical"
                 android:textSize="16sp"
-                android:paddingTop="20dp"
+                android:paddingTop="12dp"
                 android:text="Michael Example"
                 android:layout_height="wrap_content" />
             <TextView

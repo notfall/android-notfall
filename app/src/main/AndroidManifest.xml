@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
-        
+
         <service
             android:name=".android.MyFirebaseMessagingService">
             <intent-filter>
