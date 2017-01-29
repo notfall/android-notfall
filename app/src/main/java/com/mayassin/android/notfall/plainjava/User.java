@@ -10,14 +10,15 @@ public abstract class User {
     private String fullName;
     private double latitude;
     private double longitude;
-    private String insuranceProvider;
 
-    public User(String username, int age, String fullName, String location, String insuranceProvider){
+    public User(){
+    }
+
+    public User(String username, int age, String fullName, String location){
 
         this.username = username;
         this.age = age;
         this.fullName = fullName;
-        this.insuranceProvider = insuranceProvider;
         String[] splitLocations = location.split("\\s*,\\s*");
         this.latitude = Double.parseDouble(splitLocations[0]);
         this.longitude = Double.parseDouble(splitLocations[1]);
@@ -61,13 +62,5 @@ public abstract class User {
 
     public void setLongitude(double longitude) {
         this.longitude = longitude;
-    }
-
-    public String getInsuranceProvider() {
-        return insuranceProvider;
-    }
-
-    public void setInsuranceProvider(String insuranceProvider) {
-        this.insuranceProvider = insuranceProvider;
     }
 }

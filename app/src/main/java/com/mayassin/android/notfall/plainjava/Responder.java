@@ -8,7 +8,11 @@ import com.google.firebase.database.FirebaseDatabase;
  */
 
 public class Responder extends User {
+
     public Responder(){
     }
 
+    public Responder(String username, int age, String fullName, String location) {
+        super(username, age, fullName, location);
+    }
 }
