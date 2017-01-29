@@ -35,7 +35,12 @@ import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.jaredrummler.materialspinner.MaterialSpinner;
@@ -63,12 +68,15 @@ public class MainActivity extends AppCompatActivity {
     private boolean openedSearchSpinner;
     private SessionManager sess;
     private Location lastLocation;
-    private ArrayList<User> allCareTakers;
+    private User clinton,jbill,mohamed,mscott,tbob;
+    private ArrayList<User> allCareTakers = new ArrayList<User>();
     private ArrayList<User> allFirstResponders;
     private ArrayList<User> allHospitals;
     private User currentUser;
     private DatabaseReference mFirebaseDatabaseReference;
     private StorageReference storageRef;
+    private RecycleViewAdapterHelpers adapter;
+    private String currentlyViewing;
 
 
 
@@ -80,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         storageRef = storage.getReferenceFromUrl("gs://notfall-aac12.appspot.com");
         sess = new SessionManager(this);
+        generateAllHelpers();
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
         mDrawerList = (ListView)findViewById(R.id.left_drawer);
@@ -119,9 +128,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void pullDataAboutCurrentUser() {
+        String username = sess.getCurrentUser();
+        currentUser = new User(username);
 
         // PULL DATA FROM SERVER FROM USERNAME FROM SESSIONMANAGER
-        currentUser = new User("Marietta Johns", 0, sess.getCurrentUser());
+
     }
 
     private void checkPermissions() {
@@ -168,18 +179,39 @@ public class MainActivity extends AppCompatActivity {
         spinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
 
             @Override public void onItemSelected(MaterialSpinner view, int position, long id, String item) {
-                if(openedSearchSpinner) {
-                    return;
+                if(!openedSearchSpinner) {
+                    call911Button.setVisibility(View.GONE);
+                    requestFabMenu.showMenuButton(true);
+                    openedSearchSpinner = true;
                 }
-                call911Button.setVisibility(View.GONE);
-                requestFabMenu.showMenuButton(true);
-                openedSearchSpinner = true;
 
+                if(position == 0 ) {
+                    allCareTakers.clear();
+                    adapter.notifyDataSetChanged();
+                    currentlyViewing = "Nothing";
+                }
+                if(position == 1 ) {
+                    attachCaretaker();
+                    currentlyViewing = "CareTakers";
+                }
+                if(position == 2 ) {
+                    attachAdapterFirstResponder();
+                    currentlyViewing = "First Responders";
+                }
+                if(position == 3 ) {
+                    attachHospitals();
+                }
 //                Snackbar.make(view, "Clicked " + item, Snackbar.LENGTH_LONG).show();
             }
         });
-
+        adapter = new RecycleViewAdapterHelpers(allCareTakers);
+        recyclerView.setAdapter(adapter);
         setUpOnClickListeners();
+    }
+
+    private void attachHospitals() {
+        allCareTakers.clear();
+        adapter.notifyDataSetChanged();
     }
 
     private void grabLocation() {
@@ -197,6 +229,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void postLocationToServer() {
+
+        mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        mFirebaseDatabaseReference.child("users").child(sess.getCurrentUser()).child("location").setValue(lastLocation.getLatitude() + "," + lastLocation.getLongitude());
+//        mFirebaseDatabaseReference.child("users").child(sess.getCurrentUser()).child("full_name").setValue();
 
     }
 
@@ -226,12 +262,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Toast.makeText(MainActivity.this, "Position Clicked " + position, Toast.LENGTH_SHORT).show();
+                getSupportActionBar().setTitle(mActivityTitle);
+                mDrawerLayout.closeDrawer(Gravity.LEFT, true);
+
                 if(position == 4) {
                     sess.destroySession();
                 }
 
                 if (position == 0) {
                     showProfilePopUp();
+                }
+                if (position == 5) {
+                    emergency911PopUp();
                 }
             }
         });
@@ -247,9 +289,12 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
         TextView profileFullNameTextView = (TextView) dialog.getCustomView().findViewById(R.id.profile_full_name_text_view);
         TextView profilelocationTextView = (TextView) dialog.getCustomView().findViewById(R.id.profile_location_text_view);
+        TextView profileAgeTextView = (TextView) dialog.getCustomView().findViewById(R.id.profile_age_text_view);
+
         final ImageView profilePictureImageView = (ImageView) dialog.getCustomView().findViewById(R.id.profile_image);
         profileFullNameTextView.setText(currentUser.getFullName());
         profilelocationTextView.setText("" + lastLocation.getLatitude() + " , " + lastLocation.getLongitude());
+        profileAgeTextView.setText(currentUser.getAge()+"");
 
         StorageReference pathReference = storageRef.child("users").child(currentUser.getUsername()).child("profilepic.jpg");
         pathReference.getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
@@ -264,8 +309,6 @@ public class MainActivity extends AppCompatActivity {
                 // WHEN IMAGE FAILED
             }
         });
-        getSupportActionBar().setTitle(mActivityTitle);
-        mDrawerLayout.closeDrawer(Gravity.LEFT, true);
     }
 
 
@@ -308,17 +351,31 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void generateCareTakers() {
-        User johnBill = new User("John Bill", 1, "jbill");
-        User timBob = new User("Tim Bob", 1, "tbob");
-        User michaelscott = new User("Michael Scott", 1, "mscott");
-        User mohamed = new User("Mohamed Barack", 1, "mohamed");
-        User clinton = new User("Daniel Clinten", 1, "clinton");
-        allCareTakers.add(johnBill);
-        allCareTakers.add(timBob);
+    private void attachAdapterFirstResponder() {
+        allCareTakers.clear();
+        allCareTakers.add(tbob);
         allCareTakers.add(clinton);
-        allCareTakers.add(michaelscott);
+        allCareTakers.add(mscott);
         allCareTakers.add(mohamed);
+
+        adapter.notifyDataSetChanged();
+        recyclerView.setAdapter(adapter);
+    }
+    private void generateAllHelpers() {
+        jbill = new User("jbill");
+        tbob = new User("tbob");
+        mscott = new User("mscott");
+        mohamed = new User("mohamed");
+        clinton = new User("clinton");
+    }
+
+    private void attachCaretaker() {
+        allCareTakers.clear();
+        allCareTakers.add(jbill);
+
+        adapter = new RecycleViewAdapterHelpers(allCareTakers);
+        recyclerView.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
     }
 
     @Override

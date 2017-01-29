@@ -12,30 +12,28 @@
         <FrameLayout
             android:layout_width="0dp"
             android:layout_weight="0.2"
-            android:layout_height="match_parent">
+            android:layout_marginStart="16dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp">
 
             <android.support.v7.widget.CardView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:elevation="12dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="10dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
                 android:id="@+id/view2"
-                app:cardCornerRadius="40dp"
-                android:layout_marginLeft="16dp"
-                android:layout_centerHorizontal="true"
+                app:cardCornerRadius="30dp"
                 android:innerRadius="0dp"
                 android:shape="ring"
                 android:thicknessRatio="1.9">
                 <ImageView
-                    android:layout_height="72dp"
-                    android:layout_width="72dp"
-                    android:layout_marginTop="-12dp"
-                    android:layout_marginStart="-8dp"
-                    android:id="@+id/helper_profile_picture"
-                    android:src="@drawable/ic_perm_contact_calendar_teal_700_48dp"
-                    android:layout_alignParentTop="true"
-                    android:layout_centerHorizontal="true">
+                    android:layout_height="100dp"
+                    android:layout_width="100dp"
+                    android:layout_marginLeft="-20dp"
+                    android:layout_marginTop="-20dp"
+                    android:src="@color/SlateBlue"
+                    android:id="@+id/helper_profile_picture">
                 </ImageView>
             </android.support.v7.widget.CardView>
 

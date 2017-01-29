@@ -1,16 +1,41 @@
 package com.mayassin.android.notfall.plainjava;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.support.annotation.NonNull;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
 /**
  * Created by Anurag on 1/29/17.
  */
 
 public class User {
-    private String username;
-    private int age;
-    private String fullName;
-    private double latitude;
-    private double longitude;
-    private int type;
+    public String username;
+    public Long age;
+    public String fullName;
+    public double latitude;
+    public double longitude;
+    public int type;
+    private StorageReference storageRef;
+
+    public Bitmap getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(Bitmap profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    public Bitmap profileImage;
     String certificateTitle;
     String insuranceProvider;
     String primaryCaretaker;
@@ -28,22 +53,56 @@ public class User {
         }
     }
 
-    public User(int type,String username, int age, String fullName, String location){
-
-        this.username = username;
-        this.age = age;
-        this.fullName = fullName;
-        String[] splitLocations = location.split("\\s*,\\s*");
-        this.latitude = Double.parseDouble(splitLocations[0]);
-        this.longitude = Double.parseDouble(splitLocations[1]);
-    }
-
     public User(String fullName, int type, String username) {
         this.fullName = fullName;
         this.type = type;
         this.username = username;
+
+
     }
 
+    public User(String username) {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        storageRef = storage.getReferenceFromUrl("gs://notfall-aac12.appspot.com");
+        this.username = username;
+        DatabaseReference mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference queryref = mFirebaseDatabaseReference.child("users").child(username);
+        queryref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot child: dataSnapshot.getChildren()) {
+                    if(child.getKey().equals("full_name")) {
+                        fullName = child.getValue().toString();
+                    }
+                    if(child.getKey().equals("type")) {
+                        type = (int) (long) child.getValue();
+                    }
+                    if(child.getKey().equals("age")) {
+                        age = (Long) child.getValue();
+                    }
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        StorageReference pathReference = storageRef.child("users").child(username).child("profilepic.jpg");
+        pathReference.getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                profileImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // WHEN IMAGE FAILED
+            }
+        });
+    }
     public String getUsername() {
         return username;
     }
@@ -52,11 +111,11 @@ public class User {
         this.username = username;
     }
 
-    public int getAge() {
+    public Long getAge() {
         return age;
     }
 
-    public void setAge(int age) {
+    public void setAge(Long age) {
         this.age = age;
     }
 

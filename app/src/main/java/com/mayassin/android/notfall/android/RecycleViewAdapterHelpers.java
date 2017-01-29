@@ -29,10 +29,8 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
     private DatabaseReference mFirebaseDatabaseReference;
     private StorageReference storageRef;
 //    private PopUpInterface popUpInterface;
-    public RecycleViewAdapterHelpers(ArrayList<User> allCourses, int type) {
+    public RecycleViewAdapterHelpers(ArrayList<User> allCourses) {
         this.allHelpers = allCourses;
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        storageRef = storage.getReferenceFromUrl("gs://notfall-aac12.appspot.com");
     }
 
 
@@ -54,23 +52,8 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
 
         holder.fullName.setText(helper.getFullName());
         holder.helperType.setText(helper.getType());
+        holder.profilePicture.setImageBitmap(helper.getProfileImage());
 
-// COULD BE BREAKING EVERYTHING BECAUSE HOLDER IS FINAL!?!?!
-        // TODO
-
-        StorageReference pathReference = storageRef.child("users").child(helper.getUsername()).child("profilepic.jpg");
-        pathReference.getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
-            @Override
-            public void onSuccess(byte[] bytes) {
-                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                holder.profilePicture.setImageBitmap(bitmap);
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                // WHEN IMAGE FAILED
-            }
-        });
     }
 
 
@@ -91,6 +74,7 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
             super(view);
             this.fullName = (TextView) view.findViewById(R.id.helper_full_name_text_view);
             this.helperType = (TextView) view.findViewById(R.id.helper_type_text_view);
+            this.profilePicture = (ImageView) view.findViewById(R.id.helper_profile_picture);
             this.mLayout = view.findViewById(R.id.helper_type_and_name_layout);
             this.nextButton = (ImageView) view.findViewById(R.id.request_specific_helper_button);
             this.nextButton.setOnClickListener(nextButtonClickListener);
