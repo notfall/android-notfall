@@ -3,6 +3,8 @@ package com.mayassin.android.notfall.android;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -15,19 +17,27 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.mayassin.android.notfall.R;
 import com.mayassin.android.notfall.plainjava.User;
@@ -51,10 +61,14 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionMenu requestFabMenu;
     private FloatingActionButton call911Fab;
     private boolean openedSearchSpinner;
+    private SessionManager sess;
     private Location lastLocation;
     private ArrayList<User> allCareTakers;
     private ArrayList<User> allFirstResponders;
     private ArrayList<User> allHospitals;
+    private User currentUser;
+    private DatabaseReference mFirebaseDatabaseReference;
+    private StorageReference storageRef;
 
 
 
@@ -63,19 +77,25 @@ public class MainActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        storageRef = storage.getReferenceFromUrl("gs://notfall-aac12.appspot.com");
+        sess = new SessionManager(this);
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
         mDrawerList = (ListView)findViewById(R.id.left_drawer);
         mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
-        mActivityTitle = "Welcome, Mrs. Kent";
+        mActivityTitle = "Hello, " + sess.getCurrentUser();
         recyclerView = (RecyclerView) findViewById(R.id.recyle);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         call911Button = (Button) findViewById(R.id.call_911_button);
         requestFabMenu = (FloatingActionMenu) findViewById(R.id.main_fab_menu);
         call911Fab = (FloatingActionButton) findViewById(R.id.call_911_fab);
         requestFabMenu.hideMenuButton(false);
+
         addDrawerItems();
         setupDrawer();
+        pullDataAboutCurrentUser();
+
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
@@ -91,11 +111,17 @@ public class MainActivity extends AppCompatActivity {
         } else {
             checkPermissions();
         }
-        
-        
-        
-        
-        
+
+
+
+
+
+    }
+
+    private void pullDataAboutCurrentUser() {
+
+        // PULL DATA FROM SERVER FROM USERNAME FROM SESSIONMANAGER
+        currentUser = new User("Marietta Johns", 0, sess.getCurrentUser());
     }
 
     private void checkPermissions() {
@@ -192,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addDrawerItems() {
-        String[] osArray = { "Profile", "Home", "Navigate", "Contact", "Call 911"};
+        String[] osArray = { "Profile", "Home", "Navigate", "Contact","Logout", "Call 911"};
         mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, osArray);
         mDrawerList.setAdapter(mAdapter);
 
@@ -200,9 +226,48 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Toast.makeText(MainActivity.this, "Position Clicked " + position, Toast.LENGTH_SHORT).show();
+                if(position == 4) {
+                    sess.destroySession();
+                }
+
+                if (position == 0) {
+                    showProfilePopUp();
+                }
             }
         });
     }
+
+    private void showProfilePopUp() {
+        MaterialDialog dialog = new MaterialDialog.Builder(this)
+                .customView(R.layout.profile_custom_dialog, true)
+                .positiveColor(getResources().getColor(R.color.colorPrimary))
+                .neutralColor(getResources().getColor(R.color.Gray))
+                .build();
+
+        dialog.show();
+        TextView profileFullNameTextView = (TextView) dialog.getCustomView().findViewById(R.id.profile_full_name_text_view);
+        TextView profilelocationTextView = (TextView) dialog.getCustomView().findViewById(R.id.profile_location_text_view);
+        final ImageView profilePictureImageView = (ImageView) dialog.getCustomView().findViewById(R.id.profile_image);
+        profileFullNameTextView.setText(currentUser.getFullName());
+        profilelocationTextView.setText("" + lastLocation.getLatitude() + " , " + lastLocation.getLongitude());
+
+        StorageReference pathReference = storageRef.child("users").child(currentUser.getUsername()).child("profilepic.jpg");
+        pathReference.getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                profilePictureImageView.setImageBitmap(bitmap);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // WHEN IMAGE FAILED
+            }
+        });
+        getSupportActionBar().setTitle(mActivityTitle);
+        mDrawerLayout.closeDrawer(Gravity.LEFT, true);
+    }
+
 
     private void setupDrawer() {
         mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
@@ -244,11 +309,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void generateCareTakers() {
-        User johnBill = new User("John Bill", 1);
-        User timBob = new User("Tim Bob", 1);
-        User michaelscott = new User("Michael Scott", 1);
-        User mohamed = new User("Mohamed Barack", 1);
-        User clinton = new User("Daniel Clinten", 1);
+        User johnBill = new User("John Bill", 1, "jbill");
+        User timBob = new User("Tim Bob", 1, "tbob");
+        User michaelscott = new User("Michael Scott", 1, "mscott");
+        User mohamed = new User("Mohamed Barack", 1, "mohamed");
+        User clinton = new User("Daniel Clinten", 1, "clinton");
         allCareTakers.add(johnBill);
         allCareTakers.add(timBob);
         allCareTakers.add(clinton);

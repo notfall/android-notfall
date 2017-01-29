@@ -58,7 +58,7 @@ public class MyLocation {
         if (network_enabled)
             lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListenerNetwork);
         timer1 = new Timer();
-        timer1.schedule(new GetLastLocation(), 5000);
+        timer1.schedule(new GetLastLocation(), 1000);
         return true;
     }
 

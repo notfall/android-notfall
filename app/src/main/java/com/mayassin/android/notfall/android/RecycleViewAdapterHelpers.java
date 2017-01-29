@@ -1,5 +1,8 @@
 package com.mayassin.android.notfall.android;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,6 +10,11 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.mayassin.android.notfall.R;
 import com.mayassin.android.notfall.plainjava.User;
 
@@ -18,9 +26,13 @@ import java.util.ArrayList;
 
 public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewAdapterHelpers.CustomViewHolder> {
     private ArrayList<User> allHelpers;
+    private DatabaseReference mFirebaseDatabaseReference;
+    private StorageReference storageRef;
 //    private PopUpInterface popUpInterface;
     public RecycleViewAdapterHelpers(ArrayList<User> allCourses, int type) {
         this.allHelpers = allCourses;
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        storageRef = storage.getReferenceFromUrl("gs://notfall-aac12.appspot.com");
     }
 
 
@@ -37,12 +49,30 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
 //    }
 
     @Override
-    public void onBindViewHolder(RecycleViewAdapterHelpers.CustomViewHolder holder, int position) {
+    public void onBindViewHolder(final RecycleViewAdapterHelpers.CustomViewHolder holder, int position) {
         User helper = allHelpers.get(position);
 
-//        holder.titleText.setText(course.title);
-//        holder.crnText.setText(course.getCRNText());
+        holder.fullName.setText(helper.getFullName());
+        holder.helperType.setText(helper.getType());
+
+// COULD BE BREAKING EVERYTHING BECAUSE HOLDER IS FINAL!?!?!
+        // TODO
+
+        StorageReference pathReference = storageRef.child("users").child(helper.getUsername()).child("profilepic.jpg");
+        pathReference.getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                holder.profilePicture.setImageBitmap(bitmap);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // WHEN IMAGE FAILED
+            }
+        });
     }
+
 
     @Override
     public int getItemCount() {

@@ -1,6 +1,7 @@
 package com.mayassin.android.notfall.android;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.provider.Settings;
@@ -28,6 +29,8 @@ public class SessionManager {
         editor.putBoolean("loggedIn",true);
         editor.putString("username",username);
         editor.commit();
+        Intent intent = new Intent(_context, MainActivity.class);
+        _context.startActivity(intent);
     }
 
     public void updateLocation(Location location) {
@@ -50,7 +53,7 @@ public class SessionManager {
 
 
     public String getCurrentUser(){
-        return pref.getString("username",null);
+        return pref.getString("username", "Marrietta");
     }
 
     public boolean isLoggedIn(){
@@ -59,10 +62,10 @@ public class SessionManager {
 
 
     public void redirectToLogin(){
-//        Intent i = new Intent(_context, LoginActivity.class);
-//        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        _context.startActivity(i);
+        Intent i = new Intent(_context, LoginActivity.class);
+        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        _context.startActivity(i);
     }
 
 

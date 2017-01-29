@@ -15,8 +15,6 @@ public class User {
     String insuranceProvider;
     String primaryCaretaker;
 
-    public User(){
-    }
 
     public String getType() {
         switch (type) {
@@ -40,9 +38,10 @@ public class User {
         this.longitude = Double.parseDouble(splitLocations[1]);
     }
 
-    public User(String fullName, int type) {
+    public User(String fullName, int type, String username) {
         this.fullName = fullName;
         this.type = type;
+        this.username = username;
     }
 
     public String getUsername() {

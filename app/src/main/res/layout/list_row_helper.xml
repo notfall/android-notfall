@@ -28,10 +28,12 @@
                 android:shape="ring"
                 android:thicknessRatio="1.9">
                 <ImageView
-                    android:layout_height="48dp"
-                    android:layout_width="48dp"
+                    android:layout_height="72dp"
+                    android:layout_width="72dp"
+                    android:layout_marginTop="-12dp"
+                    android:layout_marginStart="-8dp"
                     android:id="@+id/helper_profile_picture"
-                    android:src="@drawable/ic_call_white_24dp"
+                    android:src="@drawable/ic_perm_contact_calendar_teal_700_48dp"
                     android:layout_alignParentTop="true"
                     android:layout_centerHorizontal="true">
                 </ImageView>
