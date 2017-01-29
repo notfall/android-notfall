@@ -4,7 +4,7 @@ package com.mayassin.android.notfall.plainjava;
  * Created by Anurag on 1/28/17.
  */
 
-public class Support {
+public class Caretaker {
     int age;
     String certificateTitle;
     String fullName;
@@ -12,7 +12,10 @@ public class Support {
     double longitude;
     int type;  // 0 is caretaker, 1 is responders
 
-    public Support(int age, String certificateTitle, String fullName, String location, int type){
+    public Caretaker(){
+    }
+
+    public Caretaker(int age, String certificateTitle, String fullName, String location, int type){
         this.age = age;
         this.certificateTitle = certificateTitle;
         this.fullName = fullName;

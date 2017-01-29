@@ -6,13 +6,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class Patient {
 
-
-    private DatabaseReference mFirebaseDatabaseReference;
-    public Patient() {
-        mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
-    }
-
-    String username;
+  String username;
   int age;
   String fullName;
   String insuranceProvider;
@@ -20,8 +14,11 @@ public class Patient {
   double longitude;
   String primaryCaretaker;
 
+  public Patient() {
+  }
+
   public Patient(String username, int age, String fullName, String insuranceProvider, String location, String primaryCaretaker) {
-      super();
+
     this.username = username;
     this.age = age;
     this.fullName = fullName;
