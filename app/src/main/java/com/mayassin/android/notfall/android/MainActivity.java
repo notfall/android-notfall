@@ -142,7 +142,6 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface {
 
             }
         });
-
         sendTokenToDatabase();
         checkTextPermission();
     }
@@ -307,7 +306,9 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface {
     }
 
     private void initializeApp() {
-
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{Manifest.permission.SEND_SMS},
+                1);
         final MaterialSpinner spinner = (MaterialSpinner) findViewById(R.id.looking_for_spinner);
         spinner.setItems("....", "a care taker", "a first responder", "a nearby hospital");
         spinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener<String>() {
@@ -547,7 +548,7 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface {
                     grabLocation();
                 } else {
                     MaterialDialog dialog = new MaterialDialog.Builder(this)
-                            .title("Permission Denied")
+                            .title("Permission Required")
                             .positiveColor(getResources().getColor(R.color.colorPrimary))
                             .neutralColor(getResources().getColor(R.color.Gray))
                             .content("This app is almost useless without location permission. Please grant it")
@@ -558,6 +559,10 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface {
                                     ActivityCompat.requestPermissions(MainActivity.this,
                                             new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                                             MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+
+                                    ActivityCompat.requestPermissions(MainActivity.this,
+                                            new String[]{Manifest.permission.SEND_SMS},
+                                            1);
                                 }
                             })
                             .show();
