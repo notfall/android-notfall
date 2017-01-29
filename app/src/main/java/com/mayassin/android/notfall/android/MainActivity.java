@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface {
                         adapter.notifyDataSetChanged();
                         adapter.setPopUpInterface(MainActivity.this);
                     }
-                }, 790L);
+                }, 750);
             }
 
             @Override
