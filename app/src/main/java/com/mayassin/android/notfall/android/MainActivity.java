@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -210,6 +211,20 @@ public class MainActivity extends AppCompatActivity implements PopUpInterface {
                         allHospitals.add(tempUser);
                     }
                 }
+                new Handler().postDelayed(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        ArrayList<User> allHelpers = new ArrayList<User>();
+                        allHelpers.addAll(allCareTakers);
+                        allHelpers.addAll(allFirstResponders);
+                        allHelpers.addAll(allHospitals);
+                        adapter = new RecycleViewAdapterHelpers(allHelpers);
+                        recyclerView.setAdapter(adapter);
+                        adapter.notifyDataSetChanged();
+                        adapter.setPopUpInterface(MainActivity.this);
+                    }
+                }, 790L);
             }
 
             @Override
