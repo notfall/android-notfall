@@ -12,13 +12,14 @@ public class Patient {
   double longitude;
   String primaryCaretaker;
 
-  public Patient(String username, int age, String fullName, String insuranceProvider, double latitude, double longitude, String primaryCaretaker) {
+  public Patient(String username, int age, String fullName, String insuranceProvider, String location, String primaryCaretaker) {
     this.username = username;
     this.age = age;
     this.fullName = fullName;
     this.insuranceProvider = insuranceProvider;
-    this.latitude = latitude;
-    this.longitude = longitude;
+    String[] splitLocations = location.split("\\s*,\\s*");
+    this.latitude = Double.parseDouble(splitLocations[0]);
+    this.longitude = Double.parseDouble(splitLocations[1]);
     this.primaryCaretaker = primaryCaretaker;
   }
 
