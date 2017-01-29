@@ -10,6 +10,10 @@ public abstract class User {
     private String fullName;
     private double latitude;
     private double longitude;
+    private int type;
+    String certificateTitle;
+    String insuranceProvider;
+    String primaryCaretaker;
 
     public User(){
     }

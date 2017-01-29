@@ -25,6 +25,9 @@ import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.mayassin.android.notfall.R;
+import com.mayassin.android.notfall.plainjava.User;
+
+import java.util.ArrayList;
 
 /**
  * Created by mohamed on 1/29/17.
@@ -42,6 +45,11 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionMenu requestFabMenu;
     private FloatingActionButton call911Fab;
     private boolean openedSearchSpinner;
+    private ArrayList<User> allCareTakers;
+    private ArrayList<User> allFirstResponders;
+    private ArrayList<User> allHospitals;
+
+
 
 
     @Override
@@ -151,6 +159,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .show();
+    }
+
+    private void generateCareTakers() {
+
     }
 
     @Override

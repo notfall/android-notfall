@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.mayassin.android.notfall.R;
+import com.mayassin.android.notfall.plainjava.User;
 
 import java.util.ArrayList;
 
@@ -16,9 +17,9 @@ import java.util.ArrayList;
  */
 
 public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewAdapterHelpers.CustomViewHolder> {
-    private ArrayList<Object> allHelpers;
+    private ArrayList<User> allHelpers;
 //    private PopUpInterface popUpInterface;
-    public RecycleViewAdapterHelpers(ArrayList<Object> allCourses) {
+    public RecycleViewAdapterHelpers(ArrayList<User> allCourses, int type) {
         this.allHelpers = allCourses;
     }
 
@@ -37,7 +38,7 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
 
     @Override
     public void onBindViewHolder(RecycleViewAdapterHelpers.CustomViewHolder holder, int position) {
-        Object helper = allHelpers.get(position);
+        User helper = allHelpers.get(position);
 
 //        holder.titleText.setText(course.title);
 //        holder.crnText.setText(course.getCRNText());
@@ -49,18 +50,19 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
     }
 
     class CustomViewHolder extends RecyclerView.ViewHolder {
-        protected TextView titleText;
-        protected TextView crnText;
+        protected TextView fullName;
+        protected TextView helperType;
+        protected ImageView profilePicture;
         // Info button, not actually a button to save memory but just as useful!
         protected ImageView nextButton;
         protected View mLayout;
 
         public CustomViewHolder(View view) {
             super(view);
-//            this.titleText = (TextView) view.findViewById(R.id.title_text_view);
-//            this.crnText = (TextView) view.findViewById(R.id.crn_text_view);
-//            this.mLayout = view.findViewById(R.id.class_info_layout);
-//            this.nextButton = (ImageView) view.findViewById(R.id.next_button_image_view);
+            this.fullName = (TextView) view.findViewById(R.id.helper_full_name_text_view);
+            this.helperType = (TextView) view.findViewById(R.id.helper_type_text_view);
+            this.mLayout = view.findViewById(R.id.helper_type_and_name_layout);
+            this.nextButton = (ImageView) view.findViewById(R.id.request_specific_helper_button);
             this.nextButton.setOnClickListener(nextButtonClickListener);
             this.mLayout.setOnClickListener(layoutOnClickListener);
         }
@@ -68,7 +70,7 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
         private View.OnClickListener layoutOnClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Object course = allHelpers.get(getAdapterPosition());
+                User helper = allHelpers.get(getAdapterPosition());
 // locaterInterface.goToExhibit(allExhibits.get(getAdapterPosition()).getTitle());
 //                popUpInterface.popUp(course);
             }
@@ -77,7 +79,7 @@ public class RecycleViewAdapterHelpers extends RecyclerView.Adapter<RecycleViewA
         private View.OnClickListener nextButtonClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Object helper = allHelpers.get(getAdapterPosition());
+                User helper = allHelpers.get(getAdapterPosition());
 //                locaterInterface.popUpBox(exhibit);
                 // GO to ClassActivity
 //                popUpInterface.goToCoursePage(course);

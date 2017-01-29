@@ -12,28 +12,28 @@ import com.google.firebase.database.ValueEventListener;
 
 public class UserBuilder {
     private DatabaseReference mFirebaseDatabaseReference;
-    protected Patient patient;
-    protected Caretaker caretaker;
-    protected Responder responder;
-    String username;
-
-    public UserBuilder(String username) {
-        patient = new Patient();
-        caretaker = new Caretaker();
-        responder = new Responder();
-    }
-
-    public Patient createPatient(){
-        return patient;
-    }
-
-    public Caretaker createCaretaker(){
-        return caretaker;
-    }
-
-    public Responder createResponder(){
-        return responder;
-    }
+//    protected Patient patient;
+//    protected Caretaker caretaker;
+//    protected Responder responder;
+//    String username;
+//
+//    public UserBuilder(String username) {
+//        patient = new Patient();
+//        caretaker = new Caretaker();
+//        responder = new Responder();
+//    }
+//
+//    public Patient createPatient(){
+//        return patient;
+//    }
+//
+//    public Caretaker createCaretaker(){
+//        return caretaker;
+//    }
+//
+//    public Responder createResponder(){
+//        return responder;
+//    }
 
     public void getFromDatabase(String userId, int type){
         mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
@@ -43,15 +43,15 @@ public class UserBuilder {
             // check if Patient, Caretaker, or Responder
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if(Integer.parseInt(dataSnapshot.getValue().toString()) == 0){
-                    createPatient();
-                }
-                else if(Integer.parseInt(dataSnapshot.getValue().toString()) == 1){
-                    createCaretaker();
-                }
-                else{
-                    createResponder();
-                }
+//                if(Integer.parseInt(dataSnapshot.getValue().toString()) == 0){
+//                    createPatient();
+//                }
+//                else if(Integer.parseInt(dataSnapshot.getValue().toString()) == 1){
+//                    createCaretaker();
+//                }
+//                else{
+//                    createResponder();
+//                }
             }
 
             @Override
