@@ -12,11 +12,11 @@
     tools:context="com.mayassin.android.notfall.android.LoginActivity">
 
     <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
         android:layout_marginBottom="16dp"
         android:elevation="8dp"
-        android:src="@mipmap/ic_launcher"/>
+        android:src="@drawable/logo"/>
     <View
         android:layout_width="0dp"
         android:focusable="true"
